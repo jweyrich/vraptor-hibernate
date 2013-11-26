@@ -22,14 +22,12 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.AnnotationConfiguration;
 import org.hibernate.cfg.Configuration;
 
 import br.com.caelum.vraptor.environment.Environment;
 import br.com.caelum.vraptor.ioc.ApplicationScoped;
 import br.com.caelum.vraptor.ioc.Component;
 import br.com.caelum.vraptor.ioc.ComponentFactory;
-import br.com.caelum.vraptor.ioc.Container;
 
 /**
  * Creates a SessionFactory from default resource /hibernate.cfg.xml, using
@@ -42,32 +40,34 @@ import br.com.caelum.vraptor.ioc.Container;
 @ApplicationScoped
 public class SessionFactoryCreator implements ComponentFactory<SessionFactory> {
 
+	private final Environment environment;
 	private SessionFactory factory;
-	private final Container container;
 
-	public SessionFactoryCreator(Container container) {
-		this.container = container;
+	public SessionFactoryCreator(Environment environment) {
+		this.environment = environment;
 	}
 
 	@PostConstruct
 	public void create() {
-		Configuration configuration = new AnnotationConfiguration();
+		Configuration configuration = new Configuration();
 		configuration = configuration.configure(getHibernateCfgLocation());
-		factory = configuration.buildSessionFactory();
+		this.factory = configuration.buildSessionFactory();
 	}
 
+	@Override
 	public SessionFactory getInstance() {
-		return factory;
+		return this.factory;
 	}
 
 	@PreDestroy
 	public void destroy() {
-		factory.close();
+		this.factory.close();
 	}
 	
 	private URL getHibernateCfgLocation() {
 		if (isEnvironmentAvailable()) {
-			Environment env = container.instanceFor(Environment.class);
+			//Environment env = container.instanceFor(Environment.class);
+			final Environment env = this.environment;
 			return env.getResource(getHibernateCfgName());
 		}
 
@@ -88,3 +88,4 @@ public class SessionFactoryCreator implements ComponentFactory<SessionFactory> {
 	}
 
 }
+
